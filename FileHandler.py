@@ -1,4 +1,4 @@
-import City.py
+import Tour.py
 
 # read a TSP file, process contents
 def readFile(filename):
@@ -56,6 +56,8 @@ def readFile(filename):
 
 
 # run an instance of our TSP test
+# algorithm is a function that performs a TSP approximation
+# cityList is an array of each city in the graph 
 def run_test( algorithm, cityList ):
 
 	#call function
