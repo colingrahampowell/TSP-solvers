@@ -1,3 +1,7 @@
+
+# TestHandler.py: includes functions for reading a file containing TSP data 
+# and running a TSP approx. algorithm with that file's data
+
 import Tour.py
 
 # read a TSP file, process contents
@@ -53,7 +57,6 @@ def readFile(filename):
 
 	file.close() # close file
 	return cityList
-
 
 # run an instance of our TSP test
 # algorithm is a function that performs a TSP approximation
