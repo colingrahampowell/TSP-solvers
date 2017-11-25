@@ -27,9 +27,11 @@ class Path:
         if self.level == 0:
             self.__calculate_start_bound()
         elif self.level == 1:
-            self.bound -= ((self.graph.get_nth_edge(0, 0) + self.graph.get_nth_edge(1, 0)) / 2)
+            self.bound -= (((self.graph.get_nth_edge(0, 0) + self.graph.get_nth_edge(1, 0)) / 2)
+                           + self.graph.distance(0, 1))
         else:
-            self.bound -= ((self.graph.get_nth_edge(self.level - 1, 1) + self.graph.get_nth_edge(self.level, 0)) / 2)
+            self.bound -= (((self.graph.get_nth_edge(self.level - 1, 1) + self.graph.get_nth_edge(self.level, 0)) / 2)
+                           + self.graph.distance(self.path[self.level - 2], self.path[self.level - 1]))
 
     def __set_visited_at_level(self, value):
         self.graph.set_visited(self.path[self.level], value)

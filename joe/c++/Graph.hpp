@@ -17,6 +17,7 @@ private:
     std::vector<std::vector<double>> nthReferences;
     std::vector<Point> points;
     std::string pointFile;
+    int width;
 
     // private internal functions
     std::vector<Point> createPoints(std::ifstream* pointFile);
@@ -25,7 +26,7 @@ private:
 public:
     // constructor & getters / setters
     explicit Graph(std::string inputFile);
-    unsigned long getWidth() const;
+    int getWidth();
     std::string getPointFileName();
 
     // public functions

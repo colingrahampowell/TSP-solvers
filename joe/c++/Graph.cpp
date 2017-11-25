@@ -5,9 +5,9 @@
 #include <fstream>
 #include "Graph.hpp"
 
-unsigned long Graph::getWidth() const
+int Graph::getWidth()
 {
-    return points.size();
+    return width;
 }
 
 Graph::Graph(const std::string inputFile)
@@ -37,12 +37,18 @@ std::vector<Point> Graph::createPoints(std::ifstream* pointFile)
     // create the temporary vector
     std::vector<Point> tempPoints = std::vector<Point>();
 
+    // create int to track width
+    int tempWidth = 0;
+
     // read in the values and append points to the vector for each line in the file
     int id, x, y;
     while (*pointFile >> id >> x >> y)
     {
         tempPoints.emplace_back(Point(id, x, y));
+        tempWidth++;
     }
+
+    width = tempWidth;
 
     // return the built vector
     return tempPoints;
@@ -54,21 +60,21 @@ std::vector<std::vector<double>> Graph::createMatrix()
     std::vector<std::vector<double>> tempGraph;
 
     // iterate over points adding a new vector for each point in points
-    for (auto it_a = std::begin(points); it_a != std::end(points); ++it_a)
+    for (auto &it_a : points)
     {
         // create a temporary empty row
         std::vector<double> tempRow;
 
         // build the row for the point
-        for (auto it_b = std::begin(points); it_b != std::end(points); ++it_b)
+        for (auto &point : points)
         {
-            if (it_a == it_b)
+            if (it_a.getId() == point.getId())
             {
                 tempRow.push_back(0.0);
             }
             else
             {
-                tempRow.push_back(it_a->distanceTo(*it_b));
+                tempRow.push_back(it_a.distanceTo(point));
             }
         }
 
@@ -94,10 +100,9 @@ std::vector<std::vector<double>> Graph::createNthReferences()
 {
     std::vector<std::vector<double>> tempNth;
 
-    for (auto it = std::begin(matrix); it != std::end(matrix); ++it)
+    for (auto tempVect : matrix)
     {
-        std::vector<double> tempVect = *it;
-        std::sort(std::begin(tempVect), std::end(tempVect));
+        std::sort(tempVect.begin(), tempVect.end());
         tempNth.emplace_back(std::vector<double>(tempVect.begin() + 1, tempVect.begin() + 3));
     }
 
@@ -124,7 +129,7 @@ double Graph::distance(int p1, int p2)
     }
     else
     {
-        return matrix[p1][p2];
+        return matrix[points[p1].getId()][points[p2].getId()];
     }
 }
 

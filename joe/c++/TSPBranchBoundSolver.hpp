@@ -22,7 +22,7 @@ private:
 
     // methods
     void setStartingBound();
-    void autoUpdateBound();
+    void autoUpdateBound(Point p);
     void setVisitedAtCurrentLevel(bool value);
     void recursiveTSPHelper(double weight);
     void setPathWeight(double weight);

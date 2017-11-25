@@ -9,13 +9,13 @@
 void TSPBranchBoundSolver::setStartingBound()
 {
     setBound(0);
-    for (auto p_itr = graph.pointsBegin(); p_itr != graph.pointsEnd(); p_itr++)
+    for (int i = 0; i < graph.getWidth(); i++)
     {
-        setBound(getBound() + ((graph.getNthEdge(p_itr->getId(), 0) + graph.getNthEdge(p_itr->getId(), 1)) / 2));
+        setBound(getBound() + ((graph.getNthEdge(i, 0) + graph.getNthEdge(i, 1)) / 2));
     }
 }
 
-void TSPBranchBoundSolver::autoUpdateBound()
+void TSPBranchBoundSolver::autoUpdateBound(Point p)
 {
     if (getLevel() == 0)
     {
@@ -23,11 +23,13 @@ void TSPBranchBoundSolver::autoUpdateBound()
     }
     else if (getLevel() == 1)
     {
-        setBound(getBound() - ((graph.getNthEdge(0, 0) + graph.getNthEdge(1, 0)) / 2));
+        setBound(getBound() - ((graph.getNthEdge(0, 0) + graph.getNthEdge(0, 1)) / 2) + graph.distance(0, 1));
     }
     else
     {
-        setBound(getBound() - ((graph.getNthEdge(getLevel() - 1, 1) + graph.getNthEdge(getLevel(), 0)) / 2));
+        setBound(getBound() -
+                 ((graph.getNthEdge(path[getLevel() - 2], 1) + graph.getNthEdge(path[getLevel() - 1], 0)) / 2) +
+                   graph.distance(path[getLevel() - 1], p.getId()));
     }
 }
 
@@ -56,7 +58,7 @@ void TSPBranchBoundSolver::recursiveTSPHelper(double weight)
             {
                 double newWeight = weight + graph.distance(path[getLevel() - 1], p_itr->getId());
                 double saveBound = getBound();
-                autoUpdateBound();
+                autoUpdateBound(*p_itr);
                 if ((newWeight + getBound()) < getPathWeight())
                 {
                     addPointToPath(getLevel(), p_itr->getId());
@@ -95,7 +97,7 @@ void TSPBranchBoundSolver::setPathWeight(double weight)
 
 void TSPBranchBoundSolver::findPath()
 {
-    addPointToPath(getLevel(), graph.getPointId(0));
+    addPointToPath(getLevel(), 0);
     setVisitedAtCurrentLevel(true);
     setLevel(getLevel() + 1);
     recursiveTSPHelper(0);
@@ -130,7 +132,7 @@ void TSPBranchBoundSolver::print_results(bool toFile)
 TSPBranchBoundSolver::TSPBranchBoundSolver(Graph graph) : graph(graph)
 {
     // create path filled with -1
-    path = std::vector<int>(graph.getWidth(), -1);
+    path = std::vector<int>(static_cast<unsigned long>(graph.getWidth()), -1);
 
     // set starting level and path weight
     setLevel(0);
