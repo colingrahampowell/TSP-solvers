@@ -5,6 +5,7 @@ class Graph:
     def __init__(self, filename):
         self.__create_points(filename)
         self.__create_graph()
+        self.__create_nth_references()
         self.graph_width = len(self.matrix)
 
     def __create_graph(self):
@@ -31,20 +32,18 @@ class Graph:
     def set_visited(self, point_num, value):
         self.points[point_num].visited = value
 
-    def get_points(self, is_visited=None):
-        if is_visited is None:
-            return self.points
-        else:
-            return [x for x in self.points if x.visited == is_visited]
-
     def get_nth_edge(self, point_num, n):
-        if n > self.graph_width:
+        if n > 2:
             return None
         else:
-            return sorted(self.matrix[point_num])[n]
+            return self.nth_references[point_num][n]
 
-    def get_starting_bound(self):
-        bound = 0
-        for point in self.points:
-            bound = bound + ((self.get_nth_edge(point.id_num, 1) + self.get_nth_edge(point.id_num, 2)) / 2)
-        return bound
+    def distance(self, p1, p2):
+        return self.matrix[p1][p2]
+
+    def __create_nth_references(self):
+        self.nth_references = [[None] * 2 for _ in self.points]
+        for i in range(len(self.matrix)):
+            sorted_row = sorted(self.matrix[i])
+            self.nth_references[i][0] = sorted_row[0]
+            self.nth_references[i][1] = sorted_row[1]

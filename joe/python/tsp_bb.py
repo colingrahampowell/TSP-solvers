@@ -1,7 +1,7 @@
 import sys
 
 from graph import Graph
-from path
+from path import Path
 
 
 def main():
@@ -13,9 +13,8 @@ def main():
         exit(1)
 
     graph = Graph(sys.argv[1])
-    path
-
-    print "test"
+    path = Path(graph)
+    path.branch_and_bound_tsp()
 
 
 if __name__ == "__main__":
