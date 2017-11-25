@@ -12,12 +12,18 @@ unsigned long Graph::getWidth() const
 
 Graph::Graph(const std::string inputFile)
 {
+    // save value of file name
+    pointFile = inputFile;
+
     // open the input file
     std::ifstream infile = std::ifstream();
     infile.open(inputFile);
 
     // generate the points vector
     points = createPoints(&infile);
+
+    // close the input file
+    infile.close();
 
     // create the matrix
     matrix = createMatrix();
@@ -100,7 +106,7 @@ std::vector<std::vector<double>> Graph::createNthReferences()
 
 double Graph::getNthEdge(int pointNum, int n)
 {
-    if (n > 2 || pointNum > getWidth())
+    if (n > 1 || pointNum > getWidth())
     {
         return -1;
     }
@@ -120,5 +126,35 @@ double Graph::distance(int p1, int p2)
     {
         return matrix[p1][p2];
     }
+}
+
+std::string Graph::getPointFileName()
+{
+    return pointFile;
+}
+
+std::vector<std::vector<double>>::iterator Graph::matrixBegin()
+{
+    return matrix.begin();
+}
+
+std::vector<std::vector<double>>::iterator Graph::matrixEnd()
+{
+    return matrix.end();
+}
+
+std::vector<Point>::iterator Graph::pointsBegin()
+{
+    return points.begin();
+}
+
+std::vector<Point>::iterator Graph::pointsEnd()
+{
+    return points.end();
+}
+
+int Graph::getPointId(int n)
+{
+    return points[n].getId();
 }
 
