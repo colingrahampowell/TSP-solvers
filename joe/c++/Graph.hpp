@@ -13,23 +13,25 @@
 class Graph
 {
 private:
-
     // class variables
     std::vector<std::vector<double>> matrix;
+    std::vector<std::vector<double>> nthReferences;
     std::vector<Point> points;
 
     // private internal functions
     std::vector<Point> createPoints(std::ifstream* pointFile);
-
+    std::vector<std::vector<double>> createNthReferences();
+    std::vector<std::vector<double>> createMatrix();
 public:
-
-    Graph(std::string inputFile);
-
-    ~Graph();
-
+    // constructor & getters / setters
+    explicit Graph(std::string inputFile);
     unsigned long getWidth() const;
 
-    std::vector<std::vector<double>> createMatrix();
+    // public functions
+    bool isVisited(int pointNumber);
+    void setVisited(int pointNumber, bool value);
+    double getNthEdge(int pointNum, int n);
+    double distance(int p1, int p2);
 };
 
 

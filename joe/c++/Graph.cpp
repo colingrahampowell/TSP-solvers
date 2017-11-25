@@ -10,12 +10,6 @@ unsigned long Graph::getWidth() const
     return points.size();
 }
 
-Graph::~Graph()
-{
-
-}
-
-
 Graph::Graph(const std::string inputFile)
 {
     // open the input file
@@ -27,6 +21,9 @@ Graph::Graph(const std::string inputFile)
 
     // create the matrix
     matrix = createMatrix();
+
+    // create the nth references
+    nthReferences = createNthReferences();
 }
 
 std::vector<Point> Graph::createPoints(std::ifstream* pointFile)
@@ -75,5 +72,53 @@ std::vector<std::vector<double>> Graph::createMatrix()
 
     // return the built graph
     return tempGraph;
+}
+
+bool Graph::isVisited(int pointNumber)
+{
+    return points[pointNumber].isVisited();
+}
+
+void Graph::setVisited(int pointNumber, bool value)
+{
+    points[pointNumber].setVisited(value);
+}
+
+std::vector<std::vector<double>> Graph::createNthReferences()
+{
+    std::vector<std::vector<double>> tempNth;
+
+    for (auto it = std::begin(matrix); it != std::end(matrix); ++it)
+    {
+        std::vector<double> tempVect = *it;
+        std::sort(std::begin(tempVect), std::end(tempVect));
+        tempNth.emplace_back(std::vector<double>(tempVect.begin() + 1, tempVect.begin() + 3));
+    }
+
+    return tempNth;
+}
+
+double Graph::getNthEdge(int pointNum, int n)
+{
+    if (n > 2 || pointNum > getWidth())
+    {
+        return -1;
+    }
+    else
+    {
+        return nthReferences[pointNum][n];
+    }
+}
+
+double Graph::distance(int p1, int p2)
+{
+    if (p1 > getWidth() || p2 > getWidth())
+    {
+        return -1;
+    }
+    else
+    {
+        return matrix[p1][p2];
+    }
 }
 
