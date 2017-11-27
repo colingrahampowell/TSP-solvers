@@ -46,11 +46,7 @@ int main( int argc, char **argv ) {
 	ptList *tspTour = initPtList(); 
 	nearestNeighbor( tspTour, points, rand() % (points->size) );
 
-	printf("starting tour length: %d\n", getTourLength(tspTour) );
-
-	// TESTING TESTING: 2-opt
 	twoOpt( &tspTour );
-	printf("tour length: %d\n", getTourLength(tspTour) );
 
 	outputResults( strcat(filename, ".tour"), tspTour );
 
@@ -61,10 +57,6 @@ int main( int argc, char **argv ) {
 	return 0;		
 
 }
-
-/*
- * reads a file containing tsp data
- */
 
 void readFile( char *filename, ptList *points ) {
 
@@ -106,11 +98,6 @@ void readFile( char *filename, ptList *points ) {
 	fclose( fp );	
 
 }
-
-
-/* 
- * Performs nearest-neighbor tour construction
- */
 
 void nearestNeighbor( ptList *tour, ptList *points, int start ) {
 
@@ -163,28 +150,38 @@ void nearestNeighbor( ptList *tour, ptList *points, int start ) {
 }
 
 /*
- * Performs 2-opt optimization
+ * Performs a run of the 2-opt algorithm. Note that we're using the 'best swap'
+ * variation of the algorithm (taking the most beneficial swap for each iteration) 
  */
-
 
 void twoOpt( ptList **tour ) {
 
+	//printf("starting tour length: %d\n", getTourLength(*tour) );
+
 	int numNodes = (*tour)->size;
-	int i, k;
+	int i, k;	// indices into the tour; starting/ending points for our 'slice'
 
-	int best_change;
+	
+	int best_change;	// best overall change, one iteration
+	int max_i, max_k;	// 'slice' points producing best overall change
 
-	int change, max_i, max_k;
-
+	// thread-private variables: used to find local mins, slice points per-thread
+	int change;
 	int local_best;
 	int local_max_i;
 	int local_max_k;
 
+	// while there are beneficial swaps to make...
+
 	do {
+		
 		change = 0;
 		best_change = 0;
 		max_i = -1;
 		max_k = -1;
+		
+		// setting up parallel section: divide up iteration among 16 threads, 
+		// find per-thread minimums, then compare against an overall minimum
 
 		#pragma omp parallel default(none) shared(numNodes, tour, best_change, max_i, max_k) private(k, i, change, local_best, local_max_i, local_max_k) num_threads(16)
 		{
@@ -193,13 +190,19 @@ void twoOpt( ptList **tour ) {
 			local_max_i = -1;
 			local_max_k = -1;
 
+			// for each edge pair combination in the graph...
+
 			# pragma omp for
 			for(i = 1; i < numNodes - 1; i++) {
 				for(k = i + 1; k < numNodes; k++) {
+
+					// determine the change in tour length resulting from a swap
 					change = swapDistance(*tour, i, k);
 
+					// if we've found a better swap
 					if( local_best > change ) {
-
+					
+						// update our local best variables
 						local_best = change;
 						local_max_i = i; 
 						local_max_k = k;
@@ -207,6 +210,9 @@ void twoOpt( ptList **tour ) {
 				}
 
 			}
+
+			// one thread can execute this section at a time:
+			// compare local values to overall values
 
 			#pragma omp critical
 			{
@@ -219,11 +225,14 @@ void twoOpt( ptList **tour ) {
 
 		}
 
+		// if we have found a positive change
+
 		if( best_change < 0 ) { 
 
+			// swap endpoints of one 'slice' and re-combine
 			twoOptSwap( *tour, max_i, max_k );
 
-			//	printf("new length: %d\n", getTourLength(*tour));
+			//printf("new length: %d\n", getTourLength(*tour));
 			//printf("delta: %d\n", best_change);
 
 		}
@@ -254,6 +263,9 @@ void twoOptSwap( ptList *tour, int i, int k ) {
 
 }
 
+/*
+ * Gets the length of the tour passed as a parameter
+ */
 
 int getTourLength( ptList *tour ) {
 
@@ -271,6 +283,9 @@ int getTourLength( ptList *tour ) {
 	return tourDistance;
 }
 
+/*
+ * Output results to file. 
+ */
 
 void outputResults( char *filename, ptList *tour ) {
 
@@ -289,8 +304,8 @@ void outputResults( char *filename, ptList *tour ) {
 }
 
 /*
- * checks delta-distance between two edge pairs, if endpoints are swapped
- * returns 
+ * Determines the change in tour distance as the result of a single endpoint swap.
+ * Used to determine the 'best' swap to make per-iteration.
  */
 
 int swapDistance( ptList *tour, int i, int k ){
@@ -303,15 +318,13 @@ int swapDistance( ptList *tour, int i, int k ){
 	else {
 		end = k + 1;
 	}
-	// candidate edge lengths
+
 	ce1 = distanceTo( listElem( tour, i - 1 ), listElem( tour, k) );
 	ce2 = distanceTo( listElem( tour, i ), listElem( tour, end ) );
-
-	// existing edge lengths	
+	
 	ee1 = distanceTo( listElem( tour, i - 1 ), listElem(tour, i) );
 	ee2 = distanceTo( listElem( tour, k ), listElem(tour, end) );
 
-	// returns delta between candidates and existing edges (negative for improvement)
 	return ce1 + ce2 - ee1 - ee2;
 
 }

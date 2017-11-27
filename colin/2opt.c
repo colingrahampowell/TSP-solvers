@@ -16,10 +16,11 @@
 #define FALSE 0
 
 int getTourLength( ptList *tour );
-void nearestNeighbor( ptList *tour, ptList *points );
+void nearestNeighbor( ptList *tour, ptList *points, int start );
 
 void twoOpt( ptList **tour );
 void twoOptSwap( ptList *old_tour, ptList *new_tour, int start, int end );
+int swapDistance( ptList *tour, int i, int k );
 
 void readFile( char *filename, ptList *points );
 void outputResults( char *filename, ptList *tour );
@@ -50,8 +51,8 @@ int main( int argc, char **argv ) {
 
 	// nearest-neighbor 
 	ptList *tspTour = initPtList(); 
-
-	nearestNeighbor( tspTour, points );
+	
+	nearestNeighbor( tspTour, points, rand() % (points->size) );
 
 	//printf("length: %d\n", tspptList->tourLength );
 	/*
@@ -123,7 +124,7 @@ void readFile( char *filename, ptList *points ) {
 
 }
 
-void nearestNeighbor( ptList *tour, ptList *points ) {
+void nearestNeighbor( ptList *tour, ptList *points, int start ) {
 
 	Point *curr = NULL;	
 	Point *closest = NULL;
@@ -132,7 +133,7 @@ void nearestNeighbor( ptList *tour, ptList *points ) {
 
 	int i, j;
 
-	curr = listElem(points, rand() % points->size );
+	curr = listElem(points, start); 
 	curr->visited = TRUE;
 
 	// add first element to list
@@ -187,8 +188,11 @@ void twoOpt( ptList **tour ) {
 
 	int improve = TRUE;
 	int numNodes = (*tour)->size;
-
+	
+//	int a, b;
 	int i, k;
+
+	int best_change, change, max_i, max_k;
 
 //	int distance = 0;
 
@@ -196,35 +200,79 @@ void twoOpt( ptList **tour ) {
 //	int end;
 
 	ptList *new_tour;
-
+/*
 	while( improve ) {
 
 		improve = FALSE;
-		
+		new_tour = initPtList();
+*/
+	do {
+		change = 0;
+		best_change = 0;
+		max_i = -1;
+		max_k = -1;
+
 		for(i = 1; i < numNodes - 1; i++) {
-			
 			for(k = i + 1; k < numNodes; k++) {
-	
-				new_tour = initPtList();				
+				change = swapDistance(*tour, i, k);
 
-				twoOptSwap( *tour, new_tour, i, k );
-			
-				if( getTourLength(new_tour) < getTourLength(*tour) ) {
-				
-					printf("new tour length: %d\n", getTourLength(new_tour) );
+				if( best_change > change ) {
 
-					//printf("Swapped! i=%d, k=%d\n", i, k);
-					cleanPtList( *tour );
-					*tour = NULL;	
-
-					*tour = new_tour;
-					improve = TRUE;
-
-					break;				
+					best_change = change;
+					max_i = i; 
+					max_k = k;
 				}
-		
-				cleanPtList( new_tour );
+			}
 
+		}
+
+		if( best_change < 0 ) { 
+
+//			printf("max i: %d\n", max_i);
+//			printf("max k: %d\n", max_k);
+
+			new_tour = initPtList();				
+			twoOptSwap( *tour, new_tour, max_i, max_k );
+
+			cleanPtList( *tour );
+			*tour = NULL;	
+
+			*tour = new_tour;
+
+			printf("new length: %d\n", getTourLength(*tour));
+
+		}
+
+	} while(best_change < 0);
+
+		/*		
+			for(i = 1; i < numNodes - 1; i++) {
+				
+				for(k = i + 1; k < numNodes; k++) {
+		
+					new_tour = initPtList();				
+
+					twoOptSwap( *tour, new_tour, i, k );
+
+					a = getTourLength(new_tour);
+					b = getTourLength(*tour);
+				
+					if( a < b ) { 
+					
+						printf("new tour length: %d\n", a );
+
+						//printf("Swapped! i=%d, k=%d\n", i, k);
+						cleanPtList( *tour );
+						*tour = NULL;	
+
+						*tour = new_tour;
+						improve = TRUE;
+
+						break;				
+					}
+			
+					cleanPtList( new_tour );
+		*/
 				/*
 				// if k is at the last node, we need to 'wrap around' to the first node for k + 1
 				if( k == numNodes - 1 ) {
@@ -255,12 +303,12 @@ void twoOpt( ptList **tour ) {
 				}
 			*/
 
-			}
+		//	}
 
-			if( improve ) { break; }
+		//	if( improve ) { break; }
 
-		}	
-	}
+//		}	
+//	}
 }
 
 /*
@@ -360,5 +408,27 @@ void outputResults( char *filename, ptList *tour ) {
 	}
 
 	fclose(of);
+
+}
+
+
+int swapDistance( ptList *tour, int i, int k ){
+
+	int end, ee1, ee2, ce1, ce2;
+
+	if( k == tour->size - 1 ) {
+		end = 0	;
+	}
+	else {
+		end = k + 1;
+	}
+
+	ce1 = distanceTo( listElem( tour, i - 1 ), listElem( tour, k) );
+	ce2 = distanceTo( listElem( tour, i ), listElem( tour, end ) );
+	
+	ee1 = distanceTo( listElem( tour, i - 1 ), listElem(tour, i) );
+	ee2 = distanceTo( listElem( tour, k ), listElem(tour, end) );
+
+	return ce1 + ce2 - ee1 - ee2;
 
 }
