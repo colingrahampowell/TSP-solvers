@@ -85,6 +85,10 @@ int main( int argc, char **argv ) {
 
 }
 
+/*
+ * readFile: file-handling code adapted from getline() man pages: linux.die.net/man/3/getline
+ */
+
 void readFile( char *filename, ptList *points ) {
 
 	FILE *fp;			// file pointer
@@ -171,6 +175,7 @@ void nearestNeighbor( ptList *tour, ptList *points, int start ) {
 		closest->visited = TRUE;
 		copy = makePoint(closest->id, closest->x, closest->y);
 		addPtList( tour, copy );
+		curr = closest;
 
 	}
 
