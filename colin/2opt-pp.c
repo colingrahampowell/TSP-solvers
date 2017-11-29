@@ -17,11 +17,12 @@
 
 #define TRUE 1
 #define FALSE 0
+#define TIME_PER_TEST 175.0
 
 int getTourLength( ptList *tour );
 void nearestNeighbor( ptList *tour, ptList *points, int start );
 
-void twoOpt( ptList **tour, time_t startTime, int numSeconds );
+void twoOpt( ptList *tour, double startTime, double numSeconds );
 void twoOptSwap( ptList *tour, int i, int k);
 int swapDistance( ptList *tour, int i, int k );
 
@@ -35,28 +36,25 @@ void outputResults( char *filename, ptList *tour );
 int main( int argc, char **argv ) {
 
 	// verify input
-	if ( argc < 2 || argc > 3 ) {
+	if ( (argc < 2 || argc > 3) || 
+		( argc == 3 && (strcmp(argv[2], "-t") != 0 ) )) {
 
-		printf("Usage: \"tsp-2opt filename.txt [0]\"\n");
+		printf("Usage: \"tsp-2opt filename.txt [-t]\"\n");
 		exit(1);
 	}
 
-	time_t startTime = time(NULL);
-	int numSeconds = INT_MAX;
+	// declare variables for storing starting, ending time
+	double startTime = omp_get_wtime();
+	double endTime;
 
-	// if the user passed no time, add 1000 years to the time
-	if ( argc == 2 ) {
+	// set start time, total time for testing
+	double numSeconds = (double) INT_MAX;	// 'default' time limit - essentially inf time 
 
-		struct tm * tempTimeInfo = localtime( &startTime );
-		tempTimeInfo->tm_year += 10000;
-		startTime = mktime( tempTimeInfo );
-
-	} else {
-
-		numSeconds = atoi(argv[2]);
+	if( argc == 3 ) {
+		numSeconds = TIME_PER_TEST;
 	}
 
-	srand(startTime);
+	int startPoint = 0;		// starting vertex in our tour
 
 	char filename[255];
 	memset( filename, '\0', sizeof(filename) / sizeof( filename[0]) );
@@ -68,9 +66,12 @@ int main( int argc, char **argv ) {
 
 	// nearest-neighbor
 	ptList *tspTour = initPtList();
-	nearestNeighbor( tspTour, points, rand() % (points->size) );
+	
 
-	twoOpt( &tspTour, startTime, numSeconds );
+	nearestNeighbor( tspTour, points, startPoint );
+
+	// run two-opt optimization with remaining time
+	twoOpt( tspTour, startTime, numSeconds );
 
 	outputResults( strcat(filename, ".tour"), tspTour );
 
@@ -78,8 +79,10 @@ int main( int argc, char **argv ) {
 	cleanPtList( points );
 	cleanPtList( tspTour );
 
+	endTime = omp_get_wtime(); 
+
 	// print total time running
-	printf("Total running time: %.2f seconds.\n", difftime(time(NULL), startTime));
+	printf("Complete. solution found in: %10.8f seconds.\n", (double) (endTime - startTime));
 
 	return 0;
 
@@ -111,6 +114,7 @@ void readFile( char *filename, ptList *points ) {
 	// while there are lines left...
 	while ( (read = getline( &line, &len, fp ) != -1) ) {
 
+		// get id, then x coord, then y coord
 		tok = strtok( line, " ");
 		id = atoi(tok);
 
@@ -120,22 +124,30 @@ void readFile( char *filename, ptList *points ) {
 		tok = strtok( NULL, " ");
 		y = atoi(tok);
 
+		// make a new point, and add it to our points list
 		new_pt = makePoint(id, x, y);
 		addPtList( points, new_pt );
 
 	}
 
-	free(line);
-	fclose( fp );
+	free(line);		// free line after it is allocated in 'getline'
+	fclose( fp );	// close file
 
 }
 
+/*
+ * Performs a nearest-neighbor approximation of a tour on the graph
+ * represented by the 'points' argument. the tour is stored in the 'tour'
+ * argument, and the starting point for the tour is determined by the 
+ * 'start' argument.
+ */
+
 void nearestNeighbor( ptList *tour, ptList *points, int start ) {
 
-	Point *curr = NULL;
-	Point *closest = NULL;
-	Point *candidate = NULL;
-	Point *copy = NULL;
+	Point *curr = NULL;			// tracks 'current' point in our NN tour
+	Point *closest = NULL;		// tracks point closest to curr
+	Point *candidate = NULL;	// tracks 'candidate' points used to determine closest
+	Point *copy = NULL;			// used to temporarily store copies of Point structs
 
 	int i, j;
 
@@ -172,6 +184,9 @@ void nearestNeighbor( ptList *tour, ptList *points, int start ) {
 			}
 		}
 
+		// now, we have found the closest point to curr: mark it as visited, 
+		// copy it into the tour struct, and set curr to this closest point.
+
 		closest->visited = TRUE;
 		copy = makePoint(closest->id, closest->x, closest->y);
 		addPtList( tour, copy );
@@ -184,15 +199,15 @@ void nearestNeighbor( ptList *tour, ptList *points, int start ) {
 /*
  * Performs a run of the 2-opt algorithm. Note that we're using the 'best swap'
  * variation of the algorithm (taking the most beneficial swap for each iteration)
+ * NOTE: adapted from pseudocode listed in "A High Speed 2-Opt TSP Solver", by 
+ * Martin Burtscher, Texas State University. Source: 
+ * http://on-demand.gputechconf.com/gtc/2014/presentations/S4534-high-speed-2-opt-tsp-solver.pdfj
  */
 
-void twoOpt( ptList **tour, time_t startTime, int numSeconds ) {
+void twoOpt( ptList *tour, double startTime, double numSeconds ) {
 
-	//printf("starting tour length: %d\n", getTourLength(*tour) );
-
-	int numNodes = (*tour)->size;
+	int numNodes = (tour)->size;
 	int i, k;	// indices into the tour; starting/ending points for our 'slice'
-
 
 	int best_change;	// best overall change, one iteration
 	int max_i, max_k;	// 'slice' points producing best overall change
@@ -207,6 +222,7 @@ void twoOpt( ptList **tour, time_t startTime, int numSeconds ) {
 
 	do {
 
+		// reset variables at the start of each iteration
 		change = 0;
 		best_change = 0;
 		max_i = -1;
@@ -229,7 +245,7 @@ void twoOpt( ptList **tour, time_t startTime, int numSeconds ) {
 				for(k = i + 1; k < numNodes; k++) {
 
 					// determine the change in tour length resulting from a swap
-					change = swapDistance(*tour, i, k);
+					change = swapDistance(tour, i, k);
 
 					// if we've found a better swap
 					if( local_best > change ) {
@@ -262,35 +278,40 @@ void twoOpt( ptList **tour, time_t startTime, int numSeconds ) {
 		if( best_change < 0 ) {
 
 			// swap endpoints of one 'slice' and re-combine
-			twoOptSwap( *tour, max_i, max_k );
+			twoOptSwap( tour, max_i, max_k );
 
-			//printf("new length: %d\n", getTourLength(*tour));
+			//printf("new length: %d\n", getTourLength(tour));
 			//printf("delta: %d\n", best_change);
 
 		}
 
-	} while(best_change < 0 && difftime(time(NULL), startTime) <= (double) numSeconds);
+	} while(best_change < 0 && ( omp_get_wtime() - startTime ) <= (double) numSeconds );
+		//difftime(time(NULL), startTime) <= (double) numSeconds);
 
 }
 
 /*
- * Reverses items start to end in-place
+ * Reverses items start to end in-place. i is the starting index of the 
+ * subarray to be reversed, and k is the ending index. function reverses
+ * from tour[i] to tour[k], inclusive.
  */
 
 void twoOptSwap( ptList *tour, int i, int k ) {
 
-
+	// placeholder 
 	Point *tmp = NULL;
 
+	// while there are elements left to reverse 
 	while ( i < k ) {
 
+		// swap elements
 		tmp = tour->list[i];
 
 		tour->list[i] = tour->list[k];
 		tour->list[k] = tmp;
 
-		i++;
-		k--;
+		i++;	// increment "lower" iterator 
+		k--;	// decrement "upper" iterator
 	}
 
 }
@@ -305,6 +326,7 @@ int getTourLength( ptList *tour ) {
 
 	int i;
 
+	// for each point in the tour, get distance to next point
 	for(i = 0; i < tour->size - 1; i++) {
 		tourDistance += distanceTo( listElem( tour, i ), listElem( tour, i + 1 ) );
 	}
@@ -323,10 +345,12 @@ void outputResults( char *filename, ptList *tour ) {
 
 	FILE *of = fopen( filename, "w");
 
+	// output tour length
 	fprintf( of, "%d\n", getTourLength(tour) );
 
 	int i;
 
+	// output id of each point in the tour, in order
 	for( i = 0; i < tour->size; i++ ) {
 		fprintf( of, "%d\n", listElem( tour, i )->id );
 	}
@@ -337,23 +361,31 @@ void outputResults( char *filename, ptList *tour ) {
 
 /*
  * Determines the change in tour distance as the result of a single endpoint swap.
- * Used to determine the 'best' swap to make per-iteration.
+ * Used to determine the 'best' swap to make per-iteration. tour is a pointer to the 
+ * current best tour, i marks the starting point of our swap, and k marks the 
+ * ending point (recall that, to swap, we take tour[i..k] and reverse its order.
  */
 
 int swapDistance( ptList *tour, int i, int k ){
 
+	// declare variables: ee1/ee2 are existing edge lengths, ce1/ce2
+	// are candidate edge lengths
 	int end, ee1, ee2, ce1, ce2;
 
+	// account for edge case where we need to 'wrap around' to the beginning 
+	// of the tour - 'end' represents the point after k in the current tour.
 	if( k == tour->size - 1 ) {
 		end = 0	;
 	}
 	else {
 		end = k + 1;
 	}
-
+	
+	// candidate edges: distances between vertices if we choose to swap
 	ce1 = distanceTo( listElem( tour, i - 1 ), listElem( tour, k) );
 	ce2 = distanceTo( listElem( tour, i ), listElem( tour, end ) );
 
+	// existing edges: distances between vertices in the current tour.
 	ee1 = distanceTo( listElem( tour, i - 1 ), listElem(tour, i) );
 	ee2 = distanceTo( listElem( tour, k ), listElem(tour, end) );
 

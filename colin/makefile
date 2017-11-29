@@ -31,6 +31,10 @@ PROG = tsp-2opt
 tsp:
 	${CXX} ${CXXFLAGS} ${SRCS} -o ${PROG}
 
+# compile with -g flag for valgrind debugging
+debug:
+	${CXX} ${CXXFLAGS} -g ${SRCS} -o ${PROG}
+
 # remove all executable files and debug files
 clean:
 	rm -f -v *~ ${PROG} *.dSYM
