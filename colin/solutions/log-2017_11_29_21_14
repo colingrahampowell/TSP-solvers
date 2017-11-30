@@ -1,0 +1,28 @@
+test_1:
+Complete. solution found in: 0.00461663 seconds.
+Each item appears to exist in both the input file and the output file.
+('solution found of length ', 5373)
+test_2:
+Complete. solution found in: 0.00660997 seconds.
+Each item appears to exist in both the input file and the output file.
+('solution found of length ', 7482)
+test_3:
+Complete. solution found in: 0.02190342 seconds.
+Each item appears to exist in both the input file and the output file.
+('solution found of length ', 12579)
+test_4:
+Complete. solution found in: 0.12363310 seconds.
+Each item appears to exist in both the input file and the output file.
+('solution found of length ', 17350)
+test_5:
+Complete. solution found in: 0.87143690 seconds.
+Each item appears to exist in both the input file and the output file.
+('solution found of length ', 24315)
+test_6:
+Complete. solution found in: 6.15697574 seconds.
+Each item appears to exist in both the input file and the output file.
+('solution found of length ', 34076)
+test_7:
+Complete. solution found in: 84.03867856 seconds.
+Each item appears to exist in both the input file and the output file.
+('solution found of length ', 53463)
