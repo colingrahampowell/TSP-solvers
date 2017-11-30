@@ -6,8 +6,8 @@
 #################################################
 
 # set compiler, flags
-CXX = g++
-CXXFLAGS = -Wall -O3 -fopenmp
+CXX = gcc
+CXXFLAGS = -Wall -O3 -fopenmp -lm
 
 
 #################################################
