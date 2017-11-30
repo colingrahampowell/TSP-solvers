@@ -15,15 +15,20 @@ Alternatively, you may manually compile on flip:
 gcc -O3 -fopenmp -lm 2opt-pp.c point.c ptList.c -o tsp-2opt 
 
 PROGRAM EXECUTION:
-The program can be run in 'timed' or 'untimed' mode. 
-To run in timed mode, pass the -t flag, as follows:  
+The program can be run in 'timed' or 'untimed' mode. Please use timed mode
+to test the competition instances.
+
+To run in timed mode, pass the -t flag, as follows. Note that 'filename' is the 
+name of the .txt file containing each point's x/y coordinates and IDs:
 
 tsp-2opt filename -t
 
-This sets an internal timer that terminates the program after 175 seconds of execution.
+This sets an internal timer that terminates the program after 175 seconds of execution,
+outputting the results generated to that point.
 
 To run in untimed mode, omit the -t flag:
 
 tsp-2opt filename
 
-
+Wher, again, filename is the name of the .txt file containing coordinate and ID data
+for each point.
