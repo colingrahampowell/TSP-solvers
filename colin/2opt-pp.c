@@ -212,13 +212,13 @@ void twoOpt( ptList *tour, double startTime, double numSeconds ) {
 	int i, k;	// indices into the tour; starting/ending points for our 'slice'
 
 	int best_change;	// best overall change, one iteration
-	int max_i, max_k;	// 'slice' points producing best overall change
+	int min_i, min_k;	// 'slice' points producing best overall change
 
 	// thread-private variables: used to find local mins, slice points per-thread
 	int change;
 	int local_best;
-	int local_max_i;
-	int local_max_k;
+	int local_min_i;
+	int local_min_k;
 
 	// while there are beneficial swaps to make...
 
@@ -227,18 +227,18 @@ void twoOpt( ptList *tour, double startTime, double numSeconds ) {
 		// reset variables at the start of each iteration
 		change = 0;
 		best_change = 0;
-		max_i = -1;
-		max_k = -1;
+		min_i = -1;
+		min_k = -1;
 
 		// setting up parallel section: divide up iteration among 16 threads,
 		// find per-thread minimums, then compare against an overall minimum
 
-		#pragma omp parallel default(none) shared(numNodes, tour, best_change, max_i, max_k) private(k, i, change, local_best, local_max_i, local_max_k) num_threads(16)
+		#pragma omp parallel default(none) shared(numNodes, tour, best_change, min_i, min_k) private(k, i, change, local_best, local_min_i, local_min_k) num_threads(16)
 		{
 
 			local_best = 0;
-			local_max_i = -1;
-			local_max_k = -1;
+			local_min_i = -1;
+			local_min_k = -1;
 
 			// for each edge pair combination in the graph...
 
@@ -254,8 +254,8 @@ void twoOpt( ptList *tour, double startTime, double numSeconds ) {
 
 						// update our local best variables
 						local_best = change;
-						local_max_i = i;
-						local_max_k = k;
+						local_min_i = i;
+						local_min_k = k;
 					}
 				}
 
@@ -268,8 +268,8 @@ void twoOpt( ptList *tour, double startTime, double numSeconds ) {
 			{
 				if( local_best < best_change ) {
 					best_change = local_best;
-					max_i = local_max_i;
-					max_k = local_max_k;
+					min_i = local_min_i;
+					min_k = local_min_k;
 				}
 			}
 
@@ -280,7 +280,7 @@ void twoOpt( ptList *tour, double startTime, double numSeconds ) {
 		if( best_change < 0 ) {
 
 			// swap endpoints of one 'slice' and re-combine
-			twoOptSwap( tour, max_i, max_k );
+			twoOptSwap( tour, min_i, min_k );
 
 			//printf("new length: %d\n", getTourLength(tour));
 			//printf("delta: %d\n", best_change);
