@@ -1,5 +1,8 @@
 #!/bin/bash
 
+cp tsp-2opt tests/tsp-2opt
+cd tests
+
 # run three tests, store three different sets of results
 for k in `seq 1 3`
 do
@@ -12,7 +15,7 @@ do
 	for i in `seq 1 3`;
 	do
 		echo "example_$i:" | tee -a log-$now
-		tsp-2opt tsp_example_$i.txt | tee -a log-$now
+		./tsp-2opt tsp_example_$i.txt | tee -a log-$now
 		python tsp-verifier.py tsp_example_$i.txt tsp_example_$i.txt.tour | tee -a log-$now
 	done
 
@@ -20,7 +23,7 @@ do
 	for i in `seq 1 7`;
 	do
 		echo "test_$i:" | tee -a log-$now
-		tsp-2opt test-input-$i.txt -t | tee -a log-$now
+		./tsp-2opt test-input-$i.txt -t | tee -a log-$now
 		python tsp-verifier.py test-input-$i.txt test-input-$i.txt.tour | tee -a log-$now
 	done
 
@@ -29,3 +32,6 @@ do
 	mv log-$now ./ex-sols-$now
 
 done
+
+rm tsp-2opt
+cd ../
