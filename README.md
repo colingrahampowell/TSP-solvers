@@ -30,5 +30,9 @@ To run in untimed mode, omit the -t flag:
 
 tsp-2opt filename
 
-Wher, again, filename is the name of the .txt file containing coordinate and ID data
+Where, again, filename is the name of the .txt file containing coordinate and ID data
 for each point.
+
+The provided 2optscript.sh script runs and verifies tsp-2opt on the test instances provided in 
+the /tests directory, logging results in a directory containing the date and time of the test's 
+execution. A logfile is also provided to capture text output to stdout. 
