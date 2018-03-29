@@ -14,10 +14,12 @@ CXXFLAGS = -Wall -O3 -fopenmp -lm
 # USER SECTION 
 #################################################
 
+LIB = lib
+
 # source files
 SRC1 = 2opt-pp.c
-SRC2 = point.c
-SRC3 = ptList.c
+SRC2 = ${LIB}/point.c
+SRC3 = ${LIB}/ptList.c
 SRCS = ${SRC1} ${SRC2} ${SRC3}
 
 # executable files

@@ -11,8 +11,8 @@
 #include <sys/types.h>
 #include <time.h>
 #include <math.h>
-#include "point.h"
-#include "ptList.h"
+#include "lib/point.h"
+#include "lib/ptList.h"
 #include <omp.h>
 #include <unistd.h>
 #include <limits.h>
