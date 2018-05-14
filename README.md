@@ -1,4 +1,4 @@
-CS325 - Group 34 (Carrie Edwards, Joseph Pfohl, Colin Powell)
+Carrie Edwards, Joseph Pfohl, Colin Powell
 Nearest-Neighbor + 2-Opt: 
 
 This program implements a Nearest-Neighbor graph construction algorithm, 
